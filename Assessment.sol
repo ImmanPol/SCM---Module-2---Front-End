@@ -3,16 +3,16 @@ pragma solidity ^0.8.9;
 
 //import "hardhat/console.sol";
 
-contract Assessment {
-    address payable public owner;
+contract CustomAssessment {
+    address payable public accountHolder;
     uint256 public balance;
 
     event Deposit(uint256 amount);
     event Withdraw(uint256 amount);
 
-    constructor(uint initBalance) payable {
-        owner = payable(msg.sender);
-        balance = initBalance;
+    constructor(uint256 initialBalance) payable {
+        accountHolder = payable(msg.sender);
+        balance = initialBalance;
     }
 
     function getBalance() public view returns(uint256){
@@ -22,25 +22,29 @@ contract Assessment {
     function deposit(uint256 _amount) public payable {
         uint _previousBalance = balance;
 
-        // make sure this is the owner
-        require(msg.sender == owner, "You are not the owner of this account");
+        // Ensure the caller is the account holder
+        require(msg.sender == accountHolder, "Only the account holder can deposit");
 
-        // perform transaction
+        // Perform the deposit transaction
         balance += _amount;
 
-        // assert transaction completed successfully
-        assert(balance == _previousBalance + _amount);
-
-        // emit the event
+        // Emit the Deposit event
         emit Deposit(_amount);
+
+        // Assert transaction completed successfully
+        assert(balance == _previousBalance + _amount);
     }
 
-    // custom error
+    // Custom error for insufficient balance
     error InsufficientBalance(uint256 balance, uint256 withdrawAmount);
 
     function withdraw(uint256 _withdrawAmount) public {
-        require(msg.sender == owner, "You are not the owner of this account");
+        // Ensure the caller is the account holder
+        require(msg.sender == accountHolder, "Only the account holder can withdraw");
+
         uint _previousBalance = balance;
+        
+        // Check if the balance is sufficient for withdrawal
         if (balance < _withdrawAmount) {
             revert InsufficientBalance({
                 balance: balance,
@@ -48,13 +52,13 @@ contract Assessment {
             });
         }
 
-        // withdraw the given amount
+        // Perform the withdrawal transaction
         balance -= _withdrawAmount;
 
-        // assert the balance is correct
-        assert(balance == (_previousBalance - _withdrawAmount));
-
-        // emit the event
+        // Emit the Withdraw event
         emit Withdraw(_withdrawAmount);
+
+        // Assert the balance is correct
+        assert(balance == (_previousBalance - _withdrawAmount));
     }
 }
